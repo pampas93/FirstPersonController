@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,13 +10,21 @@ public class AurigaAnchors : MonoBehaviour
     [SerializeField] private Material anchorMat;
     [SerializeField] private Transform stepsParent;
 
+    Dictionary<Vector3, string> nodesMap;
+
     Vector3 posA, posB = Vector3.zero;
+
+    // mapA and mapB is last two positions that were added to node
+    // We check angles with this too . too detect slight curve paths
+    Vector3 mapNodeA, mapNodeB = Vector3.zero;
+
     // Quaternion rotationA;
     int steps = 0;
     // bool test;
     void Start()
     {
         controller.onStep += OnStepTaken;
+        nodesMap = new Dictionary<Vector3, string>();
     }
 
     private void OnStepTaken(Vector3 position, Quaternion rotation)
@@ -45,6 +54,15 @@ public class AurigaAnchors : MonoBehaviour
             {
                 CreateAnchor(posB);
                 CreateAnchor(position);
+            }
+            else
+            {
+                abDir = mapNodeB - mapNodeA;
+                bcDir = position - mapNodeB;
+                if (Vector3.Angle(abDir, bcDir) > angleThreshold)
+                {
+                    CreateAnchor(position);
+                } 
             }
 
             // Debug.Log(Vector3.Angle(abDir, bcDir));
@@ -77,11 +95,34 @@ public class AurigaAnchors : MonoBehaviour
     {
         Debug.Log($"Anchor created = {steps}");
 
-        GameObject anchor = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        anchor.transform.position = position;
-        anchor.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
-        anchor.GetComponent<Renderer>().material = anchorMat;
-        anchor.transform.GetComponent<Collider>().enabled = false;
+        Vector3 newPos = new Vector3(roundTo2(position.x),
+                                    roundTo2(position.y),
+                                    roundTo2(position.z));
+        
+        if (!nodesMap.ContainsKey(newPos))
+        {
+            GameObject anchor = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            anchor.transform.position = position;
+            anchor.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
+            anchor.GetComponent<Renderer>().material = anchorMat;
+            anchor.transform.GetComponent<Collider>().enabled = false;
 
+            nodesMap.Add(newPos, $"{steps}"); // Instead of steps, add hte anchor id
+        }
+
+        if (nodesMap.Count == 1) {
+            mapNodeA = position;
+        } else if (nodesMap.Count == 2) {
+            mapNodeB = position;
+        } else {
+            mapNodeA = mapNodeB;
+            mapNodeB = position;
+        }
+        
+    }
+
+    private float roundTo2(float value)
+    {
+        return Mathf.Round(value * 100.0f) * 0.01f;
     }
 }
