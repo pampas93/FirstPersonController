@@ -20,6 +20,7 @@ public class AurigaAnchors : MonoBehaviour
 
     // Quaternion rotationA;
     int steps = 0;
+    int lastAnchoredStep;
     // bool test;
     void Start()
     {
@@ -45,6 +46,7 @@ public class AurigaAnchors : MonoBehaviour
         }
         else
         {
+            var anchorAdded = false;
             var abDir = posB - posA;
             var bcDir = position - posB;
             float angle = Vector3.Angle(abDir, bcDir);
@@ -54,6 +56,7 @@ public class AurigaAnchors : MonoBehaviour
             {
                 CreateAnchor(posB);
                 CreateAnchor(position);
+                anchorAdded = true;
             }
             else
             {
@@ -62,7 +65,14 @@ public class AurigaAnchors : MonoBehaviour
                 if (Vector3.Angle(abDir, bcDir) > angleThreshold)
                 {
                     CreateAnchor(position);
-                } 
+                    anchorAdded = true;
+                }
+            }
+
+            // If it's been more than 10 steps since added an anchor, just add one!
+            if (!anchorAdded && (steps - lastAnchoredStep > 10))
+            {
+                CreateAnchor(position);
             }
 
             // Debug.Log(Vector3.Angle(abDir, bcDir));
@@ -118,6 +128,8 @@ public class AurigaAnchors : MonoBehaviour
             mapNodeA = mapNodeB;
             mapNodeB = position;
         }
+
+        lastAnchoredStep = steps;
         
     }
 
