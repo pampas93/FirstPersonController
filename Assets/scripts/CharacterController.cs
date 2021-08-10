@@ -5,6 +5,7 @@
  * date : 2017/12
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,10 +16,16 @@ public class CharacterController : MonoBehaviour {
     private float translation;
     private float straffe;
 
+    [SerializeField] private float stepThreshold;
+    private Vector3 prevPos;
+
+    public Action<Vector3, Quaternion> onStep;
+
     // Use this for initialization
     void Start () {
         // turn off the cursor
-        Cursor.lockState = CursorLockMode.Locked;		
+        Cursor.lockState = CursorLockMode.Locked;
+
 	}
 	
 	// Update is called once per frame
@@ -28,6 +35,13 @@ public class CharacterController : MonoBehaviour {
         translation = Input.GetAxis("Vertical") * speed * Time.deltaTime;
         straffe = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
         transform.Translate(straffe, 0, translation);
+
+        Vector3 currPos = transform.position;
+        if (Vector3.Distance(prevPos, currPos) >= stepThreshold)
+        {
+            onStep?.Invoke(currPos, transform.rotation);
+            prevPos = currPos;
+        }
 
         if (Input.GetKeyDown("escape")) {
             // turn on the cursor
