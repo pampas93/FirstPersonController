@@ -7,6 +7,7 @@ public class AurigaAnchors : MonoBehaviour
 {
     [SerializeField] private StepsListener controller;
     [SerializeField] private float angleThreshold = 10;
+    [SerializeField] private float verticalAngleThreshold = 30;
     [SerializeField] private Material anchorMat;
     [SerializeField] private Transform stepsParent;
 
@@ -50,13 +51,21 @@ public class AurigaAnchors : MonoBehaviour
             var abDir = posB - posA;
             var bcDir = position - posB;
             float angle = Vector3.Angle(abDir, bcDir);
-            Debug.Log(angle);
 
-            if (angle >= angleThreshold)
+            var abDir2d = new Vector2(posB.x, posB.z) - new Vector2(posA.x, posA.z);
+            var bcDir2d = new Vector2(position.x, position.z) - new Vector2(posB.x, posB.z);
+            float angle2d = Vector2.Angle(abDir2d, bcDir2d);
+
+            if (angle2d >= angleThreshold || angle > verticalAngleThreshold)
             {
                 CreateAnchor(posB);
                 CreateAnchor(position);
                 anchorAdded = true;
+                Debug.Log("2 anchors added");
+                Debug.Log(angle);
+                Debug.DrawRay(posA, abDir * 10, Color.red, 100.0f);
+                Debug.DrawRay(posB, bcDir * 10, Color.green, 100.0f);
+
             }
             else
             {
@@ -66,6 +75,8 @@ public class AurigaAnchors : MonoBehaviour
                 {
                     CreateAnchor(position);
                     anchorAdded = true;
+                    Debug.Log("1 anchors added");
+
                 }
             }
 
@@ -103,7 +114,7 @@ public class AurigaAnchors : MonoBehaviour
 
     private void CreateAnchor(Vector3 position)
     {
-        Debug.Log($"Anchor created = {steps}");
+        // Debug.Log($"Anchor created = {steps}");
 
         Vector3 newPos = new Vector3(roundTo2(position.x),
                                     roundTo2(position.y),
